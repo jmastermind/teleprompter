@@ -192,8 +192,14 @@ html, body {
 #stage.flip-y { transform: scaleY(-1); }
 #stage.flip-x.flip-y { transform: scale(-1, -1); }
 
-#cue { position: absolute; inset: 0; z-index: 20; pointer-events: none; display: none; }
-#stage.cue-on #cue { display: block; }
+/* Oznaka za čitanje — dvije linije ili strelica lijevo od teksta */
+
+#cue { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
+#cue > * { display: none; }
+/* Klase stanja moraju se zvati drukčije od klasa samih oznaka — inače bi
+   pravila za .cue-arrow pogodila i #stage i srušila mu dimenzije. */
+#stage.cue-mode-lines .cue-line { display: block; }
+#stage.cue-mode-arrow .cue-arrow { display: block; }
 
 .cue-line {
   position: absolute;
@@ -204,6 +210,18 @@ html, body {
 }
 .cue-line.top { top: 38%; }
 .cue-line.bottom { top: 50%; }
+
+.cue-arrow {
+  position: absolute;
+  top: 44%;
+  /* Prati marginu teksta, ali nikad ne iziđe izvan zaslona. */
+  left: max(8px, calc(var(--cue-margin, 5%) - 40px));
+  width: 0;
+  height: 0;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-left: 26px solid rgba(255, 60, 60, .85);
+}
 
 /* Kamera i snimanje */
 

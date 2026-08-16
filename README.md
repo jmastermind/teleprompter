@@ -8,7 +8,9 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
 - Uređivač teksta koji se pamti u pregledniku (`localStorage`), učitavanje `.txt` datoteke
 - Glatko pomicanje teksta (`requestAnimationFrame`), traka napretka i procjena trajanja
 - Kontrole u alatnoj traci: pokreni/pauziraj, poravnanje, zrcaljenje vodoravno i okomito,
-  boja pozadine, boja teksta, veličina slova, margina, brzina, linija za čitanje, cijeli zaslon
+  boja pozadine, boja teksta, veličina slova, margina, brzina, oznaka za čitanje, cijeli zaslon
+- Oznaka mjesta čitanja u tri stanja (gumb kruži kroz njih): isključena → dvije linije preko
+  teksta → strelica uz lijevi rub teksta, kao na originalu
 - Snimanje videozapisa kamerom (`MediaRecorder`) dok tekst teče — snimka se preuzima kao `.webm`
 - Radi offline (service worker), instalira se kao PWA
 

@@ -85,8 +85,9 @@
       <span class="tb-cap">Brzina: <b id="speed-val">10</b></span>
     </label>
 
-    <button class="tb" id="t-cue" title="Linija za čitanje" aria-label="Linija za čitanje">
-      <svg viewBox="0 0 24 24"><path d="M2 11h20v2H2z"/><path d="M4 6h9v2H4zM4 16h9v2H4z" opacity=".45"/></svg>
+    <button class="tb" id="t-cue" title="Oznaka za čitanje: isključena" aria-label="Oznaka za čitanje">
+      <svg viewBox="0 0 24 24" class="i-cue-lines"><path d="M2 8h20v2H2zM2 14h20v2H2z"/></svg>
+      <svg viewBox="0 0 24 24" class="i-cue-arrow hidden"><path d="M4 6l8 6-8 6z"/><path d="M14 7h7v2h-7zM14 15h7v2h-7z" opacity=".45"/></svg>
     </button>
 
     <button class="tb" id="t-full" title="Cijeli zaslon (F)" aria-label="Cijeli zaslon">
@@ -104,6 +105,7 @@
     <div id="cue">
       <span class="cue-line top"></span>
       <span class="cue-line bottom"></span>
+      <span class="cue-arrow"></span>
     </div>
     <div id="scroller"><div id="text"></div></div>
   </div>

@@ -7,6 +7,10 @@ const KEY_CFG = 'tp.cfg';
 
 const ALIGNS = ['left', 'center', 'justify'];
 
+// Oznaka mjesta čitanja: bez oznake → dvije linije preko teksta → strelica uz lijevi rub.
+const CUES = ['off', 'lines', 'arrow'];
+const CUE_LABELS = { off: 'bez oznake', lines: 'linije za čitanje', arrow: 'strelica' };
+
 const DEFAULTS = {
   size: 58,
   margin: 5,
@@ -14,7 +18,7 @@ const DEFAULTS = {
   align: 0,
   flipX: false,
   flipY: false,
-  cue: false,
+  cue: 0,
   bg: '#000000',
   fg: '#ffffff',
 };
@@ -63,11 +67,16 @@ let toastTimer = null;
 /* ─────────────────────────────── Postavke ─────────────────────────────── */
 
 function loadCfg() {
+  let saved;
   try {
-    return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY_CFG) || '{}') };
+    saved = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY_CFG) || '{}') };
   } catch {
     return { ...DEFAULTS };
   }
+  // Ranije je oznaka bila samo uključeno/isključeno, sada ima tri stanja.
+  if (typeof saved.cue === 'boolean') saved.cue = saved.cue ? 1 : 0;
+  saved.cue = Math.min(CUES.length - 1, Math.max(0, saved.cue | 0));
+  return saved;
 }
 
 function saveCfg() {
@@ -93,16 +102,26 @@ function applyCfg() {
   el.text.style.color = cfg.fg;
   el.text.style.fontSize = cfg.size + 'px';
   el.text.style.textAlign = ALIGNS[cfg.align];
-  el.scroller.style.paddingLeft = cfg.margin + '%';
+  // Uz strelicu tekst treba barem toliko lijevog razmaka da ga oznaka ne prekrije.
+  el.scroller.style.paddingLeft = CUES[cfg.cue] === 'arrow'
+    ? `max(48px, ${cfg.margin}%)`
+    : cfg.margin + '%';
   el.scroller.style.paddingRight = cfg.margin + '%';
+  el.stage.style.setProperty('--cue-margin', cfg.margin + '%');
 
   el.stage.classList.toggle('flip-x', cfg.flipX);
   el.stage.classList.toggle('flip-y', cfg.flipY);
-  el.stage.classList.toggle('cue-on', cfg.cue);
+  el.stage.classList.toggle('cue-mode-lines', CUES[cfg.cue] === 'lines');
+  el.stage.classList.toggle('cue-mode-arrow', CUES[cfg.cue] === 'arrow');
 
   $('#t-flipx').classList.toggle('on', cfg.flipX);
   $('#t-flipy').classList.toggle('on', cfg.flipY);
-  $('#t-cue').classList.toggle('on', cfg.cue);
+
+  const cueBtn = $('#t-cue');
+  cueBtn.classList.toggle('on', cfg.cue > 0);
+  cueBtn.title = 'Oznaka za čitanje: ' + (cfg.cue ? CUE_LABELS[CUES[cfg.cue]] : 'isključena');
+  cueBtn.querySelector('.i-cue-lines').classList.toggle('hidden', CUES[cfg.cue] === 'arrow');
+  cueBtn.querySelector('.i-cue-arrow').classList.toggle('hidden', CUES[cfg.cue] !== 'arrow');
 
   el.size.value = cfg.size;
   el.margin.value = cfg.margin;
@@ -347,7 +366,11 @@ $('#t-align').addEventListener('click', () => {
 });
 $('#t-flipx').addEventListener('click', () => { cfg.flipX = !cfg.flipX; applyCfg(); });
 $('#t-flipy').addEventListener('click', () => { cfg.flipY = !cfg.flipY; applyCfg(); });
-$('#t-cue').addEventListener('click', () => { cfg.cue = !cfg.cue; applyCfg(); });
+$('#t-cue').addEventListener('click', () => {
+  cfg.cue = (cfg.cue + 1) % CUES.length;
+  applyCfg();
+  toast('Oznaka: ' + CUE_LABELS[CUES[cfg.cue]]);
+});
 $('#t-rec').addEventListener('click', toggleRecord);
 
 $('#t-full').addEventListener('click', () => {
