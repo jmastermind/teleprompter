@@ -25,6 +25,20 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Prvo lokalni build pa provjera nginx konfiguracije — da se na GHCR nikad
+      # ne popne slika koja se ne može ni pokrenuti.
+      - name: Build for testing
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          load: true
+          tags: teleprompter:test
+          build-args: |
+            GIT_SHA=${{ github.sha }}
+
+      - name: Check nginx config
+        run: docker run --rm --entrypoint nginx teleprompter:test -t
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:

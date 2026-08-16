@@ -45,6 +45,36 @@ html, body {
 
 .ed-head-actions { display: flex; gap: 8px; }
 
+#pastebin-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px max(20px, 4vw) 0;
+  flex-wrap: wrap;
+}
+
+#pastebin-url {
+  flex: 1;
+  min-width: 220px;
+  border: 1px solid var(--line);
+  background: var(--panel-2);
+  color: var(--fg);
+  border-radius: 8px;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 14px;
+  outline: none;
+}
+#pastebin-url:focus { border-color: #4a4a56; }
+#pastebin-url::placeholder { color: #6a6a74; }
+
+#ed-msg {
+  margin: 10px max(20px, 4vw) 0;
+  font-size: 14px;
+  color: var(--muted);
+}
+#ed-msg.error { color: #ff6b73; }
+
 #script {
   flex: 1;
   width: 100%;

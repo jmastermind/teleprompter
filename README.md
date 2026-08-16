@@ -5,14 +5,30 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
 
 ## Što ima
 
-- Uređivač teksta koji se pamti u pregledniku (`localStorage`), učitavanje `.txt` datoteke
+- Uređivač teksta koji se pamti u pregledniku (`localStorage`)
+- Učitavanje `.txt`, `.md` i **`.docx`** datoteka — formatiranje se odbacuje, ostaje samo tekst
+  (docx se raspakirava ugrađenim `DecompressionStream`-om, bez ijedne biblioteke)
+- **Povlačenje s Pastebina** — prihvaća puni link, `/raw/` link ili samo ključ
 - Glatko pomicanje teksta (`requestAnimationFrame`), traka napretka i procjena trajanja
 - Kontrole u alatnoj traci: pokreni/pauziraj, poravnanje, zrcaljenje vodoravno i okomito,
   boja pozadine, boja teksta, veličina slova, margina, brzina, oznaka za čitanje, cijeli zaslon
 - Oznaka mjesta čitanja u tri stanja (gumb kruži kroz njih): isključena → dvije linije preko
   teksta → strelica uz lijevi rub teksta, kao na originalu
 - Snimanje videozapisa kamerom (`MediaRecorder`) dok tekst teče — snimka se preuzima kao `.webm`
-- Radi offline (service worker), instalira se kao PWA
+- Radi offline (service worker) i instalira se kao aplikacija (PWA)
+
+### Ograničenja koja treba znati
+
+- **Stari `.doc`** (Word 97–2003) nije podržan — to je binarni OLE format koji bez vanjske
+  biblioteke nema smisla parsirati. Aplikacija ga prepozna i javi da datoteku treba
+  spremiti kao `.docx`.
+- **Pastebin** ne šalje CORS zaglavlja, pa dohvat ide kroz proxy u nginxu
+  (`/pastebin/<ključ>` → `pastebin.com/raw/<ključ>`). Proxy je namjerno zaključan
+  na taj jedan cilj i nije opći proxy. Izvan kontejnera (npr. `python -m http.server`)
+  dohvat neće raditi.
+- **Snimanje kamerom i instalacija PWA traže siguran kontekst** — HTTPS ili `localhost`.
+  Preko običnog `http://` na LAN adresi preglednik neće ponuditi ni kameru ni instalaciju.
+  Ako to trebaš, stavi aplikaciju iza reverse proxyja s TLS-om.
 
 ### Tipkovnica
 

@@ -5,7 +5,8 @@ COPY public/ /usr/share/nginx/html/
 
 # Koji je commit u ovoj slici — provjeri s http://host:8090/version.txt
 ARG GIT_SHA=dev
-RUN echo "$GIT_SHA" > /usr/share/nginx/html/version.txt
+RUN echo "$GIT_SHA" > /usr/share/nginx/html/version.txt \
+ && sed -i "s/__V__/$GIT_SHA/g" /usr/share/nginx/html/index.html
 
 EXPOSE 80
 

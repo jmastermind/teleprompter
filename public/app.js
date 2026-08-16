@@ -1,4 +1,4 @@
-/* Teleprompter — samostalna zamjena za cueprompter.com. Bez ovisnosti, bez build koraka. */
+﻿/* Teleprompter — samostalna zamjena za cueprompter.com. Bez ovisnosti, bez build koraka. */
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -264,6 +264,191 @@ function closePrompter() {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
 }
 
+/* ───────────────────── Učitavanje teksta izvana ───────────────────────── */
+
+// Namespace WordprocessingML-a — svi .docx-evi ga koriste, bez obzira na prefiks.
+const W_NS = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+
+function edMsg(text, isError) {
+  const box = $('#ed-msg');
+  box.textContent = text || '';
+  box.classList.toggle('hidden', !text);
+  box.classList.toggle('error', !!isError);
+}
+
+/* Formatiranje se odbacuje — ostaje samo tekst, bez tvrdih razmaka i suvišnih
+   praznih redaka, jer se to na teleprompteru samo loše čita. */
+function cleanText(s) {
+  return s
+    .replace(/\r\n?/g, '\n')
+    .replace(/[\u00A0\u2007\u202F]/g, ' ')   // razmaci koji se ne lome
+    .replace(/\u00AD/g, '')                  // meki spojnik
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
+function decodeText(buf) {
+  try {
+    return new TextDecoder('utf-8', { fatal: true }).decode(buf);
+  } catch {
+    // Stariji hrvatski .txt-ovi znaju biti u Windows-1250.
+    return new TextDecoder('windows-1250').decode(buf);
+  }
+}
+
+/* Minimalno čitanje ZIP-a: docx je ZIP, a tekst je u word/document.xml.
+   Raspakiravanje radi ugrađeni DecompressionStream, bez ijedne biblioteke. */
+async function unzipEntry(buf, wanted) {
+  const dv = new DataView(buf);
+  const bytes = new Uint8Array(buf);
+
+  let eocd = -1;
+  for (let i = bytes.length - 22; i >= 0 && i > bytes.length - 66000; i--) {
+    if (dv.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error('Datoteka nije ispravan .docx (nedostaje ZIP zaglavlje).');
+
+  const count = dv.getUint16(eocd + 10, true);
+  let p = dv.getUint32(eocd + 16, true);
+
+  for (let i = 0; i < count; i++) {
+    if (dv.getUint32(p, true) !== 0x02014b50) break;
+    const method = dv.getUint16(p + 10, true);
+    const compSize = dv.getUint32(p + 20, true);
+    const nameLen = dv.getUint16(p + 28, true);
+    const extraLen = dv.getUint16(p + 30, true);
+    const commentLen = dv.getUint16(p + 32, true);
+    const localOff = dv.getUint32(p + 42, true);
+    // Neki alati (npr. Compress-Archive) upisuju backslash umjesto kose crte.
+    const name = new TextDecoder().decode(bytes.subarray(p + 46, p + 46 + nameLen)).replace(/\\/g, '/');
+
+    if (name === wanted) {
+      // Duljine imena u lokalnom zaglavlju znaju se razlikovati od centralnog.
+      const nLen = dv.getUint16(localOff + 26, true);
+      const xLen = dv.getUint16(localOff + 28, true);
+      const start = localOff + 30 + nLen + xLen;
+      const data = bytes.subarray(start, start + compSize);
+
+      if (method === 0) return data;
+      if (method !== 8) throw new Error('Nepodržana kompresija u .docx datoteci.');
+      if (!window.DecompressionStream) throw new Error('Preglednik ne podržava raspakiravanje .docx-a.');
+
+      const stream = new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'));
+      return new Uint8Array(await new Response(stream).arrayBuffer());
+    }
+    p += 46 + nameLen + extraLen + commentLen;
+  }
+  throw new Error('U .docx datoteci nema ' + wanted + '.');
+}
+
+async function readDocx(buf) {
+  const xml = new TextDecoder().decode(await unzipEntry(buf, 'word/document.xml'));
+  const doc = new DOMParser().parseFromString(xml, 'application/xml');
+  if (doc.getElementsByTagName('parsererror').length) throw new Error('Neispravan XML u .docx datoteci.');
+
+  const paragraphs = Array.from(doc.getElementsByTagNameNS(W_NS, 'p')).map((para) => {
+    let line = '';
+    (function walk(node) {
+      for (const child of node.childNodes) {
+        if (child.nodeType !== 1) continue;
+        switch (child.localName) {
+          case 'instrText': break;               // kodovi polja nisu tekst
+          case 't': line += child.textContent; break;
+          case 'tab': line += '\t'; break;
+          case 'br':
+          case 'cr': line += '\n'; break;
+          default: walk(child);
+        }
+      }
+    })(para);
+    return line;
+  });
+
+  return paragraphs.join('\n');
+}
+
+async function readTextFrom(file) {
+  const buf = await file.arrayBuffer();
+  const head = Array.from(new Uint8Array(buf.slice(0, 8)))
+    .map((b) => b.toString(16).padStart(2, '0')).join('');
+
+  if (head.startsWith('504b0304')) return cleanText(await readDocx(buf));   // "PK" → docx
+  if (head.startsWith('d0cf11e0')) {
+    throw new Error('Stari .doc format (Word 97–2003) nije podržan. Otvori ga u Wordu i spremi kao .docx.');
+  }
+  return cleanText(decodeText(buf));
+}
+
+/* Pastebin: prihvaća puni link, /raw/ link ili samo ključ. */
+function pastebinKey(input) {
+  const s = (input || '').trim();
+  if (!s) return null;
+  if (/^[A-Za-z0-9]{4,}$/.test(s)) return s;
+  const m = s.match(/pastebin\.com\/(?:raw\/)?([A-Za-z0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+/* Pastebin ne šalje CORS zaglavlja, pa ide kroz proxy u nginxu (/pastebin/<kljuc>).
+   Izravni pokušaj ostaje kao rezerva za slučaj da se app servira drukčije. */
+async function fetchPastebin(key) {
+  const sources = ['./pastebin/' + key, 'https://pastebin.com/raw/' + key];
+  let lastErr;
+  for (const url of sources) {
+    try {
+      const res = await fetch(url, { cache: 'no-store' });
+      const body = await res.text();
+      if (!res.ok) {
+        lastErr = new Error(res.status === 404
+          ? 'Paste ne postoji ili je privatan.'
+          : 'Pastebin je vratio grešku ' + res.status + '.');
+        continue;
+      }
+      if (/^Error, this is a private paste/i.test(body)) {
+        throw new Error('Paste je privatan pa se ne može dohvatiti.');
+      }
+      // Ako umjesto teksta stigne HTML, to je stranica s greškom ili sama
+      // aplikacija — nikako sadržaj paste-a.
+      if (/^\s*<(!doctype|html)\b/i.test(body)) {
+        lastErr = new Error('Odgovor nije čisti tekst (proxy nije dostupan?).');
+        continue;
+      }
+      return body;
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+  throw lastErr || new Error('Dohvat nije uspio.');
+}
+
+async function pullPastebin() {
+  const key = pastebinKey($('#pastebin-url').value);
+  if (!key) {
+    edMsg('Ne prepoznajem ključ — očekujem npr. pastebin.com/AbC12dEf ili AbC12dEf.', true);
+    return;
+  }
+  const btn = $('#pastebin-go');
+  btn.disabled = true;
+  edMsg('Dohvaćam ' + key + '…');
+  try {
+    const text = cleanText(await fetchPastebin(key));
+    if (!text) throw new Error('Paste je prazan.');
+    el.script.value = text;
+    saveText();
+    updateStats();
+    $('#pastebin-row').classList.add('hidden');
+    $('#pastebin-url').value = '';
+    edMsg('Učitano s Pastebina (' + key + ').');
+  } catch (err) {
+    const mreza = err instanceof TypeError || /failed to fetch|networkerror/i.test(err.message);
+    edMsg(mreza
+      ? 'Ne mogu dohvatiti paste — nema veze s Pastebinom ili proxy nije dostupan.'
+      : 'Ne mogu dohvatiti paste: ' + err.message, true);
+  } finally {
+    btn.disabled = false;
+  }
+}
+
 /* ──────────────────────────── Snimanje kamerom ────────────────────────── */
 
 function pickMime() {
@@ -360,10 +545,33 @@ $('#clear').addEventListener('click', () => {
 $('#file').addEventListener('change', async (e) => {
   const f = e.target.files[0];
   if (!f) return;
-  el.script.value = await f.text();
-  saveText();
-  updateStats();
+  edMsg('Učitavam ' + f.name + '…');
+  try {
+    const text = await readTextFrom(f);
+    if (!text) throw new Error('Datoteka nema teksta.');
+    el.script.value = text;
+    saveText();
+    updateStats();
+    edMsg('Učitano: ' + f.name);
+  } catch (err) {
+    edMsg(err.message, true);
+  }
   e.target.value = '';
+});
+
+$('#t-pastebin').addEventListener('click', () => {
+  const row = $('#pastebin-row');
+  row.classList.toggle('hidden');
+  edMsg('');
+  if (!row.classList.contains('hidden')) $('#pastebin-url').focus();
+});
+$('#pastebin-close').addEventListener('click', () => {
+  $('#pastebin-row').classList.add('hidden');
+  edMsg('');
+});
+$('#pastebin-go').addEventListener('click', pullPastebin);
+$('#pastebin-url').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') { e.preventDefault(); pullPastebin(); }
 });
 
 el.play.addEventListener('click', togglePlay);
@@ -453,3 +661,26 @@ updateStats();
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+/* Instalacija kao aplikacija. Gumb se pokazuje tek kad preglednik javi da je
+   instalacija moguća — traži HTTPS ili localhost. */
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  $('#install').classList.remove('hidden');
+});
+
+$('#install').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  await installPrompt.userChoice;
+  installPrompt = null;
+  $('#install').classList.add('hidden');
+});
+
+window.addEventListener('appinstalled', () => {
+  installPrompt = null;
+  $('#install').classList.add('hidden');
+});
