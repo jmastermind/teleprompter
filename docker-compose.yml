@@ -1,0 +1,11 @@
+services:
+  teleprompter:
+    # Za lokalni build zamijeni "image" s "build: ."
+    image: ghcr.io/jmastermind/teleprompter:latest
+    container_name: teleprompter
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8090}:80"
+    labels:
+      # Watchtower (već vrti na serveru za cpricecheck) auto-ažurira ovaj container.
+      - "com.centurylinklabs.watchtower.enable=true"

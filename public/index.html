@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="hr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#000000">
+<title>Teleprompter</title>
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- ─────────────────────────── UREĐIVAČ TEKSTA ─────────────────────────── -->
+<section id="editor" class="screen">
+  <header class="ed-head">
+    <h1>Teleprompter</h1>
+    <div class="ed-head-actions">
+      <label class="btn ghost" for="file">Učitaj .txt</label>
+      <input type="file" id="file" accept=".txt,.md,text/plain" hidden>
+      <button class="btn ghost" id="sample">Primjer</button>
+      <button class="btn ghost" id="clear">Očisti</button>
+    </div>
+  </header>
+
+  <textarea id="script" spellcheck="false"
+    placeholder="Zalijepi ili napiši tekst koji ćeš čitati…"></textarea>
+
+  <footer class="ed-foot">
+    <div class="stats">
+      <span id="stat-words">0 riječi</span>
+      <span class="dot">•</span>
+      <span id="stat-time">~0:00</span>
+      <span class="hint">pri trenutnoj brzini</span>
+    </div>
+    <button class="btn primary big" id="start">Pokreni teleprompter</button>
+  </footer>
+</section>
+
+<!-- ───────────────────────────── TELEPROMPTER ──────────────────────────── -->
+<section id="prompter" class="screen hidden">
+
+  <div id="toolbar">
+    <button class="tb" id="t-play" title="Pokreni / pauziraj (razmaknica)" aria-label="Pokreni">
+      <svg viewBox="0 0 24 24" class="i-play"><path d="M8 5v14l11-7z"/></svg>
+      <svg viewBox="0 0 24 24" class="i-pause hidden"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+    </button>
+
+    <button class="tb" id="t-align" title="Poravnanje teksta" aria-label="Poravnanje">
+      <svg viewBox="0 0 24 24"><path d="M3 5h18v2H3zM3 11h12v2H3zM3 17h18v2H3z"/></svg>
+    </button>
+
+    <button class="tb" id="t-flipx" title="Zrcali vodoravno" aria-label="Zrcali vodoravno">
+      <svg viewBox="0 0 24 24"><path d="M11 3h2v18h-2z"/><path d="M9 6H4v12h5v-2H6V8h3z"/><path d="M15 6h5v12h-5v-2h3V8h-3z" opacity=".45"/></svg>
+    </button>
+
+    <button class="tb" id="t-flipy" title="Zrcali okomito" aria-label="Zrcali okomito">
+      <svg viewBox="0 0 24 24"><path d="M3 11h18v2H3z"/><path d="M6 9V4h12v5h-2V6H8v3z"/><path d="M6 15v5h12v-5h-2v3H8v-3z" opacity=".45"/></svg>
+    </button>
+
+    <label class="tb swatch" id="t-bg" title="Boja pozadine">
+      <input type="color" id="bg-color" value="#000000">
+      <span class="swatch-box"></span>
+      <span class="tb-cap">Pozadina</span>
+    </label>
+
+    <label class="tb swatch" id="t-fg" title="Boja teksta">
+      <input type="color" id="fg-color" value="#ffffff">
+      <span class="swatch-box"></span>
+      <span class="tb-cap">Tekst</span>
+    </label>
+
+    <label class="tb slider">
+      <input type="range" id="size" min="20" max="160" step="2" value="58">
+      <span class="tb-cap">Veličina: <b id="size-val">58px</b></span>
+    </label>
+
+    <label class="tb slider">
+      <input type="range" id="margin" min="0" max="35" step="1" value="5">
+      <span class="tb-cap">Margina: <b id="margin-val">5%</b></span>
+    </label>
+
+    <label class="tb slider">
+      <input type="range" id="speed" min="1" max="60" step="1" value="10">
+      <span class="tb-cap">Brzina: <b id="speed-val">10</b></span>
+    </label>
+
+    <button class="tb" id="t-cue" title="Linija za čitanje" aria-label="Linija za čitanje">
+      <svg viewBox="0 0 24 24"><path d="M2 11h20v2H2z"/><path d="M4 6h9v2H4zM4 16h9v2H4z" opacity=".45"/></svg>
+    </button>
+
+    <button class="tb" id="t-full" title="Cijeli zaslon (F)" aria-label="Cijeli zaslon">
+      <svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zM14 4h6v6h-2V6h-4zM4 14h2v4h4v2H4zM18 14h2v6h-6v-2h4z"/></svg>
+    </button>
+
+    <button class="tb rec" id="t-rec" title="Snimi videozapis kamerom">Snimi video</button>
+
+    <button class="tb" id="t-edit" title="Natrag na tekst (Esc)" aria-label="Uredi tekst">
+      <svg viewBox="0 0 24 24"><path d="M4 16.5V20h3.5L18 9.5 14.5 6zM20.7 7.3a1 1 0 0 0 0-1.4l-2.6-2.6a1 1 0 0 0-1.4 0L15 5l3.5 3.5z"/></svg>
+    </button>
+  </div>
+
+  <div id="stage">
+    <div id="cue">
+      <span class="cue-line top"></span>
+      <span class="cue-line bottom"></span>
+    </div>
+    <div id="scroller"><div id="text"></div></div>
+  </div>
+
+  <video id="cam" muted playsinline class="hidden"></video>
+  <div id="rec-dot" class="hidden"><span></span><b id="rec-time">0:00</b></div>
+
+  <div id="progress"><div id="progress-bar"></div></div>
+  <div id="toast"></div>
+</section>
+
+<script src="app.js"></script>
+</body>
+</html>
