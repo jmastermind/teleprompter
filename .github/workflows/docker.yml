@@ -30,6 +30,8 @@ jobs:
         with:
           context: .
           push: true
+          build-args: |
+            GIT_SHA=${{ github.sha }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/teleprompter:latest
             ghcr.io/${{ github.repository_owner }}/teleprompter:${{ github.sha }}
