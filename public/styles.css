@@ -211,16 +211,23 @@ html, body {
 .cue-line.top { top: 38%; }
 .cue-line.bottom { top: 50%; }
 
+/* Vodoravni položaj računa se u JS-u (layoutCue) da prati marginu teksta,
+   pa ovdje nema oslanjanja na calc/max s postotcima. */
 .cue-arrow {
   position: absolute;
   top: 44%;
-  /* Prati marginu teksta, ali nikad ne iziđe izvan zaslona. */
-  left: max(8px, calc(var(--cue-margin, 5%) - 40px));
-  width: 0;
-  height: 0;
-  border-top: 15px solid transparent;
-  border-bottom: 15px solid transparent;
-  border-left: 26px solid rgba(255, 60, 60, .85);
+  left: 8px;
+  width: 40px;
+  height: 40px;
+  transform: translateY(-50%);
+}
+
+.cue-arrow svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  fill: rgba(255, 60, 60, .9);
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, .8));
 }
 
 /* Kamera i snimanje */

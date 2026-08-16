@@ -88,11 +88,12 @@
     <button class="tb" id="t-cue" title="Oznaka za čitanje: isključena" aria-label="Oznaka za čitanje">
       <svg viewBox="0 0 24 24" class="i-cue-lines"><path d="M2 8h20v2H2zM2 14h20v2H2z"/></svg>
       <svg viewBox="0 0 24 24" class="i-cue-arrow hidden"><path d="M4 6l8 6-8 6z"/><path d="M14 7h7v2h-7zM14 15h7v2h-7z" opacity=".45"/></svg>
-      <span class="tb-cap">Oznaka: <b id="cue-val">—</b></span>
+      <span class="tb-cap">Oznaka</span>
     </button>
 
     <button class="tb" id="t-full" title="Cijeli zaslon (F)" aria-label="Cijeli zaslon">
       <svg viewBox="0 0 24 24"><path d="M4 4h6v2H6v4H4zM14 4h6v6h-2V6h-4zM4 14h2v4h4v2H4zM18 14h2v6h-6v-2h4z"/></svg>
+      <span class="tb-cap">Cijeli zaslon</span>
     </button>
 
     <button class="tb rec" id="t-rec" title="Snimi videozapis kamerom">Snimi video</button>
@@ -106,7 +107,9 @@
     <div id="cue">
       <span class="cue-line top"></span>
       <span class="cue-line bottom"></span>
-      <span class="cue-arrow"></span>
+      <span class="cue-arrow" aria-hidden="true">
+        <svg viewBox="0 0 40 40"><path d="M5 4 36 20 5 36z"/></svg>
+      </span>
     </div>
     <div id="scroller"><div id="text"></div></div>
   </div>
