@@ -7,5 +7,16 @@ services:
     ports:
       - "${APP_PORT:-8090}:80"
     labels:
-      # Watchtower (već vrti na serveru za cpricecheck) auto-ažurira ovaj container.
+      # Djeluje samo ako na hostu vrti Watchtower (na ovom hostu ne vrti — vidi README).
       - "com.centurylinklabs.watchtower.enable=true"
+
+  # Auto-update bez Watchtowera na hostu: odkomentiraj ovaj servis pa se slika
+  # sama povlači svakih 5 minuta. Alternativa je Portainer webhook (vidi README).
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   restart: unless-stopped
+  #   environment:
+  #     - DOCKER_API_VERSION=1.41
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: --interval 300 --cleanup --label-enable

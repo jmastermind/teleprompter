@@ -51,8 +51,22 @@ Aplikacija je na http://localhost:8090 (port se mijenja s `APP_PORT`).
 ## Deploy (GitHub → GHCR → Portainer)
 
 1. Push na `master` → GitHub Actions buildaju sliku i guraju je na
-   `ghcr.io/jmastermind/teleprompter:latest`.
+   `ghcr.io/jmastermind/teleprompter:latest` (slika je javna, pa Portainer ne treba
+   `docker login`).
 2. U Portaineru: **Stacks → Add stack → Repository** (ili zalijepi sadržaj
    `docker-compose.yml`), pa **Deploy**.
-3. Container nosi labelu `com.centurylinklabs.watchtower.enable=true`, pa ga
-   Watchtower koji već vrti na serveru sam ažurira nakon svakog builda.
+
+### Ažuriranje na novu verziju
+
+Na ovom hostu ne vrti Watchtower (on je na VPS-u), pa auto-update ne ide sam od sebe.
+Tri mogućnosti, po redu jednostavnosti:
+
+1. **Ručno u Portaineru** — Stack → **Update the stack** s uključenim
+   *Re-pull image and redeploy*. Dovoljno za povremene promjene.
+2. **Portainer webhook (auto-deploy)** — u stacku uključi **Webhook**, kopiraj URL i
+   spremi ga kao repo secret `PORTAINER_WEBHOOK`
+   (`gh secret set PORTAINER_WEBHOOK`). Workflow ga zove nakon svakog uspješnog
+   builda i Portainer sam povuče sliku i restarta stack. Bez secreta se korak preskače.
+3. **Vlastiti Watchtower u ovom stacku** — odkomentiraj `watchtower` servis u
+   `docker-compose.yml`; provjerava GHCR svakih 5 minuta i ažurira samo containere
+   s labelom `com.centurylinklabs.watchtower.enable=true`.

@@ -11,6 +11,10 @@ jobs:
       contents: read
       packages: write
 
+    env:
+      # Postavi kao repo secret ako želiš auto-deploy; bez njega se korak preskače.
+      PORTAINER_WEBHOOK: ${{ secrets.PORTAINER_WEBHOOK }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,3 +33,8 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository_owner }}/teleprompter:latest
             ghcr.io/${{ github.repository_owner }}/teleprompter:${{ github.sha }}
+
+      # Portainer sam povuče novu sliku i ponovno pokrene stack.
+      - name: Trigger Portainer redeploy
+        if: env.PORTAINER_WEBHOOK != ''
+        run: curl -fsS -X POST "$PORTAINER_WEBHOOK"
