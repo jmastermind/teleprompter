@@ -10,6 +10,7 @@ const ALIGNS = ['left', 'center', 'justify'];
 // Oznaka mjesta čitanja: bez oznake → dvije linije preko teksta → strelica uz lijevi rub.
 const CUES = ['off', 'lines', 'arrow'];
 const CUE_LABELS = { off: 'bez oznake', lines: 'linije za čitanje', arrow: 'strelica' };
+const CUE_SHORT = { off: '—', lines: 'linije', arrow: 'strelica' };
 
 const DEFAULTS = {
   size: 58,
@@ -120,6 +121,7 @@ function applyCfg() {
   const cueBtn = $('#t-cue');
   cueBtn.classList.toggle('on', cfg.cue > 0);
   cueBtn.title = 'Oznaka za čitanje: ' + (cfg.cue ? CUE_LABELS[CUES[cfg.cue]] : 'isključena');
+  $('#cue-val').textContent = CUE_SHORT[CUES[cfg.cue]];
   cueBtn.querySelector('.i-cue-lines').classList.toggle('hidden', CUES[cfg.cue] === 'arrow');
   cueBtn.querySelector('.i-cue-arrow').classList.toggle('hidden', CUES[cfg.cue] !== 'arrow');
 
