@@ -601,8 +601,56 @@ el.speed.addEventListener('input', () => { cfg.speed = +el.speed.value; applyCfg
 el.bg.addEventListener('input', () => { cfg.bg = el.bg.value; applyCfg(); });
 el.fg.addEventListener('input', () => { cfg.fg = el.fg.value; applyCfg(); });
 
+/* Povlačenje prstom ili mišem: tekst prati pokret dok se drži. Pointer Events
+   pokrivaju dodir, miš i olovku jednim kodom. Kratki dodir bez pomaka ostaje
+   pokreni/pauziraj. */
+const DRAG_THRESHOLD = 8;   // px prije nego što dodir postane povlačenje
+let drag = null;
+let suppressClick = false;
+
+el.stage.addEventListener('pointerdown', (e) => {
+  if (drag || (e.pointerType === 'mouse' && e.button !== 0)) return;
+  // Nakon povlačenja prstom klik uopće ne dođe, pa se zastavica mora očistiti
+  // ovdje — inače bi progutala sljedeći dodir.
+  suppressClick = false;
+  drag = { id: e.pointerId, startY: e.clientY, startPos: pos, moved: false, wasPlaying: playing };
+  try { el.stage.setPointerCapture(e.pointerId); } catch { /* sintetički događaji */ }
+});
+
+el.stage.addEventListener('pointermove', (e) => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dy = e.clientY - drag.startY;
+
+  if (!drag.moved) {
+    if (Math.abs(dy) < DRAG_THRESHOLD) return;
+    drag.moved = true;
+    pause();                       // automatsko pomicanje staje dok se povlači
+  }
+
+  // Kad je slika okomito zrcaljena, i smjer povlačenja je obrnut.
+  pos = Math.max(0, Math.min(maxPos, drag.startPos - dy * (cfg.flipY ? -1 : 1)));
+  render();
+  goIdle();
+});
+
+function endDrag(e) {
+  if (!drag || e.pointerId !== drag.id) return;
+  const { moved, wasPlaying, id } = drag;
+  drag = null;
+  try { el.stage.releasePointerCapture(id); } catch { /* već otpušten */ }
+  if (!moved) return;              // običan dodir → neka klik odradi svoje
+  suppressClick = true;            // povlačenje ne smije pokrenuti/pauzirati
+  if (wasPlaying) play();
+}
+
+el.stage.addEventListener('pointerup', endDrag);
+el.stage.addEventListener('pointercancel', endDrag);
+
 // Klik po tekstu pokreće/pauzira, kotačić pomiče ručno.
-el.stage.addEventListener('click', togglePlay);
+el.stage.addEventListener('click', () => {
+  if (suppressClick) { suppressClick = false; return; }
+  togglePlay();
+});
 el.stage.addEventListener('wheel', (e) => {
   e.preventDefault();
   nudge(e.deltaY * (cfg.flipY ? -1 : 1));

@@ -45,6 +45,10 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
 
 Kotačić miša pomiče tekst ručno, klik po tekstu pokreće i pauzira.
 
+**Dodir i miš:** pritisni i povuci po tekstu da ga pomakneš gore/dolje — tekst prati
+prst dok držiš. Automatsko pomicanje staje dok povlačiš i nastavlja se kad pustiš.
+Kratki dodir bez povlačenja i dalje pokreće i pauzira.
+
 ## Lokalno pokretanje
 
 ```bash
