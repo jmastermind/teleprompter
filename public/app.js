@@ -213,6 +213,15 @@ function togglePlay() {
   playing ? pause() : play();
 }
 
+/* Natrag na početak. Pauzira, jer prazan prostor na vrhu i postoji zato da se
+   presenter pripremi prije nego krene sljedeći put. */
+function toTop() {
+  pause();
+  pos = 0;
+  render();
+  goIdle();
+}
+
 function nudge(px) {
   pos = Math.max(0, Math.min(maxPos, pos + px));
   render();
@@ -585,6 +594,7 @@ $('#pastebin-url').addEventListener('keydown', (e) => {
 });
 
 el.play.addEventListener('click', togglePlay);
+$('#t-top').addEventListener('click', toTop);
 
 $('#t-align').addEventListener('click', () => {
   cfg.align = (cfg.align + 1) % ALIGNS.length;
@@ -701,7 +711,7 @@ document.addEventListener('keydown', (e) => {
     case 'PageDown':
       e.preventDefault(); nudge(el.stage.clientHeight * 0.8); break;
     case 'Home':
-      e.preventDefault(); pos = 0; render(); break;
+      e.preventDefault(); toTop(); break;
     case 'End':
       e.preventDefault(); pos = maxPos; render(); break;
     case 'f': case 'F':

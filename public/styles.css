@@ -269,10 +269,34 @@ html, body {
 
 /* Kamera i snimanje */
 
-#cam {
+/* Nazad na vrh — pluta u donjem desnom kutu, iznad trake napretka.
+   Nestaje zajedno s alatnom trakom dok tekst teče. */
+#t-top {
   position: absolute;
   right: 16px;
   bottom: 26px;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 14px;
+  border: 1px solid rgba(255, 255, 255, .25);
+  border-radius: 999px;
+  background: rgba(20, 20, 22, .8);
+  color: #e9e9ec;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  transition: opacity .25s;
+}
+#t-top:hover { background: rgba(45, 45, 52, .92); }
+#t-top svg { width: 18px; height: 18px; fill: currentColor; }
+#prompter.idle #t-top { opacity: 0; pointer-events: none; }
+
+#cam {
+  position: absolute;
+  right: 16px;
+  bottom: 84px;
   z-index: 40;
   width: 220px;
   max-width: 34vw;
@@ -337,5 +361,6 @@ html, body {
   .slider input[type=range] { width: 76px; }
   #toolbar { gap: 0; padding: 4px 6px; }
   .tb { padding: 5px 6px; min-height: 36px; }
-  #cam { width: 130px; bottom: 16px; }
+  #cam { width: 130px; bottom: 74px; }
+  #t-top { bottom: 18px; padding: 8px 12px; font-size: 12px; }
 }

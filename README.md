@@ -12,6 +12,7 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
 - Glatko pomicanje teksta (`requestAnimationFrame`), traka napretka i procjena trajanja
 - Tekst kreće ispod oznake za čitanje (na 70 % visine zaslona), pa presenter ima
   prazan prostor i nekoliko sekundi za pripremu prije prve rečenice
+- Gumb **Na vrh** u donjem desnom kutu vraća tekst na početak i pauzira, spremno za novi take
 - Kontrole u alatnoj traci: pokreni/pauziraj, poravnanje, zrcaljenje vodoravno i okomito,
   boja pozadine, boja teksta, veličina slova, margina, brzina, oznaka za čitanje, cijeli zaslon
 - Oznaka mjesta čitanja u tri stanja (gumb kruži kroz njih): isključena → dvije linije preko
@@ -40,7 +41,7 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
 | ↑ / ↓ | brzina + / − |
 | Shift + ↑ / ↓ | ručni pomak teksta |
 | PageUp / PageDown | skok za jedan zaslon (radi i s daljinskim za prezentacije) |
-| Home / End | početak / kraj |
+| Home / End | natrag na vrh (pauzira) / kraj |
 | F | cijeli zaslon |
 | M | zrcali vodoravno |
 | Esc | natrag na uređivanje |
