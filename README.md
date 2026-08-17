@@ -10,6 +10,8 @@ bez build koraka i bez ijednog vanjskog poziva. Vrti se u nginx kontejneru.
   (docx se raspakirava ugrađenim `DecompressionStream`-om, bez ijedne biblioteke)
 - **Povlačenje s Pastebina** — prihvaća puni link, `/raw/` link ili samo ključ
 - Glatko pomicanje teksta (`requestAnimationFrame`), traka napretka i procjena trajanja
+- Tekst kreće ispod oznake za čitanje (na 70 % visine zaslona), pa presenter ima
+  prazan prostor i nekoliko sekundi za pripremu prije prve rečenice
 - Kontrole u alatnoj traci: pokreni/pauziraj, poravnanje, zrcaljenje vodoravno i okomito,
   boja pozadine, boja teksta, veličina slova, margina, brzina, oznaka za čitanje, cijeli zaslon
 - Oznaka mjesta čitanja u tri stanja (gumb kruži kroz njih): isključena → dvije linije preko

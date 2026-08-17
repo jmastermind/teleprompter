@@ -98,11 +98,21 @@ function pxPerSecond() {
   return cfg.speed * cfg.size * 0.09;
 }
 
+/* Koliko praznog prostora stoji iznad prvog retka, kao udio visine zaslona.
+   Oznaka za čitanje je na 38–50 %, pa tekst kreće ispod nje — presenter dobije
+   prazan zaslon i par sekundi za pripremu prije nego prva rečenica dođe na red. */
+const LEAD_IN = 0.70;
+const TRAIL_OUT = 0.85;
+
 /* Margine teksta i položaj strelice — sve u pikselima, bez CSS calc/max, da se
    ponaša isto u svakom pregledniku. Strelica stoji lijevo od prve riječi. */
 function layoutCue() {
   const width = el.stage.clientWidth || window.innerWidth;
+  const height = el.stage.clientHeight || window.innerHeight;
   const marginPx = width * cfg.margin / 100;
+
+  el.scroller.style.paddingTop = Math.round(height * LEAD_IN) + 'px';
+  el.scroller.style.paddingBottom = Math.round(height * TRAIL_OUT) + 'px';
   const arrowMode = CUES[cfg.cue] === 'arrow';
   // Uz strelicu tekstu treba barem toliko lijevog razmaka da ga oznaka ne prekrije.
   const padLeft = arrowMode ? Math.max(56, marginPx) : marginPx;

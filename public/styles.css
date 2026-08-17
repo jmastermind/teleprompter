@@ -210,7 +210,9 @@ html, body {
 
 #scroller {
   will-change: transform;
-  padding: 22vh 0 85vh;
+  /* Točne vrijednosti postavlja layoutCue() u pikselima; ovo je samo da nema
+     bljeska prije nego se JS izvrši. */
+  padding: 70vh 0 85vh;
 }
 
 #text {
